@@ -1,0 +1,634 @@
+que es un contenedor -> forma de empaquetar aplicaciones incluyendo sus arhivos de configuracion
+
+un contenedor{html,nodejs,.env,entre otros, pero empaquetado y portable}
+
+portable = facil de compartir entre el equipo de desarrollo y operaciones
+
+facilita el despliegue y el desarrollo
+
+donde se almacenan?
+en un repositorio de contenedores
+
+un repositorio privado o publico
+dockerhub //publico con servicios y lenguajes disponibles
+
+
+antes de los contenedores:
+
+todos los integrantes de un equipo de desarrollo requieren la instalacion de la misma version
+del lenguaje o del framework, dependencias
+
+el set up es extenso y requiere una instalacion e instancia en especifico , servicios, todo
+
+cuando llega un nuevo desarrollador, se requiere almenos un par de horas o dias para realizar el set up
+
+
+con contenedores para desarrollo:
+
+se obtiene una imagen basada en linux, se comparte y se ejecuta un comando para generar el set up
+
+con contenedores para despliegue:
+
+se requiere el codigo fuente de la aplicacion , las instrucciones donde se indica como se deben actualizar
+las dependencias, los archivos de configuraciones
+
+esto se entrega al equipo de operaciones para
+-levantar servidores
+-desplegar el codigo
+-instanciar servicios
+
+si al equipo de desarrollo se le olvida declarar alguna version o algun problema con el codigo
+el equipo de desarrollo luego de un despliegue fallido debe realizar un rollback
+
+para evitar esto, el equipo de desarrollo elabora una imagen
+
+la unica dependencia que requiere esta imagen para funcionar es el runtime de docker
+
+este proceso puede ser automatizado por algunos pipelines de proveedores de servicios
+para control de version
+
+bitbucket, github,gitlab
+
+asi se facilita el despliegue y puede ser hasta automatico
+
+una imagen:
+empaquetado de dependencias, codigo y lo que se comparte
+
+un contenedor:
+la imagen configurada con la que se ejecuta un comando que mantiene las dependencias corriendo
+el entorno , las variables de entorno
+
+un conteiner:
+son capas de capas de imagenes, donde la capa de abajo es una distribucion de linux generalmente
+alpine linux
+
+
+
+|la aplicacion|
+|imagen|
+|imagen|		esto pesa menos y no requiere instanciar maquinas virtuales
+|alpine|
+
+
+docker vs maquina virtual
+		
+maquina virtual: hardware -> kernel -> aplicaciones (pesa mucho)
+
+docker: aplicaciones -> kernel de la imagen donde se está ejecutando (cientos de megas)
+
+docker-> paravirtualizacion (todo junto) host y guest 
+
+entonces podemos instalar
+
+un ubuntu , un debian , suse linux
+
+la paravirtualizacion intenta entregar la mayor cantidad de acceso de parte del sistema anfitrion de su harware
+a sus clientes
+
+docker -> virtualizacion parcial
+algunos componentes de harware se virtualizan para el sistema operativo cliente
+
+docker -> virtualizacion completa
+todos los componentes de harware que usa el cliente son virtualizados, de esta forma los
+sistemas operativos clientes no acceden en lo absoluto al hardware
+
+en todos los casos docker es superior , ya que utiliza el kernel del sistema operativo anfitrion
+los contenedores parten casi instantaneamente, con un rendimiento superior a las alternativas de virtualizacion
+
+------instalacion y configuracion-------
+
+docker desktop (ejecutar containers y gestionar imagenes)
+es una maquina virtual que corre linux y permite ejecutar containers
+permite acceder al sistema de archivos
+permite acceder a la red interna y externa
+trae herramientas y utilidades
+docker compose,cli (command line interface)
+puede correr de forma nativa en windows con wsl2 (windows subsystem for linux)
+
+instalacion normal
+
+luego de instalar
+a la izquierda tenemos el home, los containers, las imagenes, los volumenes, los ambientes de desarrollo
+a la derecha las guias
+vamos a utilizar la linea de comandos
+
+
+instalacion de docker hub
+registro en la pagina, y aqui estan contenedores de imagen hechas
+
+al acceder a una imagen , a la derecha aparece un comando para descargar por cli un contenedor
+si lo lanzamos esto trae la ultima version disponible, usualmente se debe elegir que version descargar
+
+usando docker:
+
+ver docker desktop y abrir la linea de comandos
+
+//error, falta wsl2
+
+hacer click en el enlace del error e ingresar los comandos powershell para activar las caracteristicas,
+reiniciar cuando se deba reiniciar
+
+//volvemos a usando docker:
+
+abrir cmd con privilegios (no estoy seguro)
+
+docker images //muestra las imagenes
+docker pull node //descarga la ultima version de node
+
+//al descargar , aparece que la imagen esta divida en capas, esto permite que si otra imagen depende de otra capa ya descargada
+//no requiera volver a descargarse
+
+docker images //nuevamente para listar las imagenes
+
+descargaremos una nueva imagen de node , pero con la etiqueta de la version
+
+docker pull node:18  //dos puntos especifica el nombre y version
+
+el comando descarga de forma instantanea
+
+al listar , aparecen 2 veces la imagen con etiqueta distinta
+
+docker pull node:16 
+
+docker images
+
+//ahora aparecen 3 imagenes siendo 2 con id distinto
+
+siempre debemos saber que imagen queremos descargar
+
+docker pull mysql
+
+//si existe un error en mac se especifica la plataforma
+
+docker pull --platform linux/x86_64 mysql
+
+docker images
+
+//borrar las imagenes
+
+docker image rm node:18
+docker image rm node:16
+docker image rm node
+docker image rm mysql
+
+//se pueden copiar y pegar comandos
+docker images // vacio
+
+creando un contenedor:
+docker pull mongo //es mas facil de configurar mongo
+docker create mongo //la palabra create genera un contenedor
+docker container create mongo// es lo mismo que el comando create mongo pero mas largo
+
+al ingresarlo nos devuelve un identificador del container que acabamos de crear
+por lo tanto se guarda
+
+ebda0e3b5731a39fce0443946baa4911f0ac5d44b33423a99edc0fc9ad0911a0
+
+como correr un contenedor:
+
+docker start ebda0e3b5731a39fce0443946baa4911f0ac5d44b33423a99edc0fc9ad0911a0 //si el comando entero
+
+como verificar que esta corriendo:
+
+docker ps
+
+al verificar que contenedor esta corriendo, entrega un container id mas corto
+tambien este se puede copiar y utilizar de mejor forma
+
+ebda0e3b5731 //los 12 primeros caracteres del id original
+
+el comando ps tambien entrega la informacion de:
+container id, image,command,cuando fue creado, estado , puertos , nombre del contenedor
+
+deteniendo un contenedor
+
+docker stop ebda0e3b5731
+
+cuando funciona un comando de iniciar y detener, devuelve el id
+
+docker ps //no deberia mostrar nada
+
+el contenedor sigue creado, sin embargo, sigue existiendo sin ejecutarse
+
+docker ps -a // muestra todos los contenedores con informacion nueva en el estado
+
+tambien es posible hacer referencia a un contenedor segun el nombre arbitrario
+dado por docker
+
+elminando un contenedor:
+
+docker rm charming_shirley
+
+docker ps -a //ya no aparece
+
+
+creando un contenedor con un nombre especifico
+
+docker create --name monguito mongo //devuelve el id pero no es necesario usarlo
+docker start monguito
+docker ps
+
+///////////////////todo bien pero no hay nada expuesto para acceder
+
+mapeando puertos desde la maquia host a los contenedores
+para acceder a los servicios
+
+node js 3000
+node js 3000
+mongo db 27017
+
+puede existir comunicacion entre ellos 3
+pero no comunicar desde el host al 3000 y 3000 y 27017
+por lo tanto es necesario mapearlas
+
+maquina host 3000 -> node js 3000
+maquina host 3001 -> node js 3000
+maquina host 27017 -> mongo db 27017
+
+ahora los comandos
+implementando la publicacion y mapeo de puertos
+
+docker stop monguito
+docker rm monguito
+limpios
+
+creando un contenedor con puertos mapeados
+
+docker create -p27017:27017 --name monguito mongo 
+// -p es publish , pero tambien se entiende como port
+
+el primero es el puerto de la maquina host
+el segundo es el puerto del contenedor que vamos a mapear
+
+docker start monguito //esto pide permiso de firewall si va bien
+
+docker ps //aparecen los puertos
+
+podemos decidir no especificar el puerto entregandole la decision a docker
+
+docker create -p27017 --name monguito2 mongo 
+
+//solo estamos indicando el puerto del contenedor , no el del host
+
+docker start monguito2
+docker ps
+
+es preferible en la mayoria de los casos el definir los puertos 
+ya que si existen 2 utilizando el 3000 , podemos definir
+3000 y 3001 , no asi generando un 3000 y 56372
+
+es mas ordenado definiendo el puerto
+
+
+docker stop monguito2
+docker rm monguito2
+
+ver si se esta ejecutando todo de forma correcta en un contenedor
+
+docker logs monguito //visualizar los logs
+docker logs --follow monguito //visualiza logs en tiempo real
+
+control + c //finaliza el seguimiento
+
+docker rm monguito
+docker image rm mongo
+
+//todo borrado
+
+
+utilizando todo junto 
+
+docker run mongo
+//se encuentra la imagen, sino la descarga
+//al descargarla crea un contenedor
+//al crearlo lo arranca
+
+///deteniendo docker ctrl + c || shift + alt + c
+
+
+al realizar esto muestra los logs en follow
+la idea es hacerlo en modo deatached o sin el seguimiento
+
+docker run -d mongo
+
+ahora al crear podemos aplicar todo al comando docker run
+
+
+//todo esto para dominar este comando
+docker run --name monguito -p27017:27017 -d mongo
+
+docker run va a necesariamente crear un nuevo contenedor cada vez
+docker ps -a van a aparecer todos los contenedores
+
+
+seccion dos 
+
+dockerizando un aplicacion
+
+se crea un repositorio y se copia la aplicacion de ejemplo
+
+al revisar el codigo fuente, las conexiones indican direccion,usuario y puerto al cual se conecta
+
+en resumen lo que hace es encontrar los usuarios en una base de datos y mostrarlos
+otra funcion es crear un animal dentro de la base de datos isn parametros
+finalmente existira un console log indicando que esta funcionando correctamente
+
+vamos a docker hub y escribimos mongo
+para revisar los comandos y configurar desde el inicio los usuarios
+todos los contenedores se configuran distinto por ende es necesario verificar
+la configuracion en la pagina de docker hub
+
+en este caso revisamos la configuracion de las variables de entorno
+
+descargamos la imagen de mongo
+docker pull mongo
+docker images
+
+docker ps //aparece vacio
+
+ahora creamos el container y las variables de entorno con -e
+
+docker create -p27017:27017 --name monguito -e MONGO_INITDB_ROOT_USERNAME=nico -e MONGO_INITDB_ROOT_PASSWORD=password mongo
+
+docker ps -a
+
+ahora ejecutamos el container
+
+docker start monguito
+
+docker ps // esta corriendo en el puerto
+
+vamos al codigo fuente y ejecutamos la aplicacion desde cmd
+en la ruta donde esta
+
+node index.js
+
+error por no tener la dependencia
+
+npm install express
+
+node index.js
+
+al ingresar a localhost:3000 la consola imprime listando
+al ingresar a localhost:3000/crear  imprime creando
+
+funciona
+
+metiendo la aplicacion a un contenedor
+
+detenemos la aplicacion
+
+vamos a la ruta de la aplicacion, crear un archivo llamado 
+Dockerfile //con ese nombre exacto
+
+aqui escribimos las configuraciones e instrucciones del contenedor
+
+todas las imagenes que se crean,deben estar basadas en otra imagen
+
+codigo Dockerfile:
+
+FROM node:18            //desde la pagina de dockerhub hay mas imagenes
+RUN mkdir -p /home/app  //carpeta donde estara el codigo fuente de la aplicacion dentro del contenedor
+COPY . /home/app        //tomar archivos desde el anfitrion y mandarlos al destino
+EXPOSE 3000             		//exponer un puerto para conectar o donde levanta
+CMD ["node","/home/app/index.js"]  	//comando a ejecutar para que la aplicacion corra
+
+guardamos
+
+
+explicacion:
+al crear contenedores , estos no van a tener comunicacion entre ellos,
+sabemos que podemos definir un puerto para la comunicacion externa
+pero la configuracion para que entre contenedores trasmitan servicios
+se llama agrupacion a traves de una red interna
+
+creamos una red y los contenedores pueden acceder entre si
+podemos crear varias redes
+con distintos contenedores
+podemos tener multiples entornos de desarrollo
+
+vamos a la terminal
+
+docker network ls //listar las redes
+
+docker network create mired //retorna el id de la red
+
+docker network ls
+
+docker network rm mired //borrar la red
+
+para que los contenedores puedan comunicarse entre si
+cuando se encuentran en una misma red interna
+es mediante el nombre del contenedor
+es decir que el nombre de dominio del contenedor
+va a ser el nombre que le dimos al crear el contenedor
+
+es decir en index.js en vez de @localhost, seria @monguito
+
+y ahora es posible crear la imagen de un contenedor ////
+
+nos movemos en la linea de comandos hasta la ruta de la aplicacion
+cd desktop/docker
+dir //muestra que hay en la ruta
+
+docker build -t miapp:1 .
+
+//crear una imagen con el nombre miapp con la etiqueta "1" tambien puede ser 1.0.0 y el . declara
+donde esta el dockerfile o donde me encuentro
+
+ahora al crear los contenedores debemos indicarles que pertenecen
+a una red en especifico
+
+borramos el contenedor y creamos uno nuevo vinculado a la red nueva
+
+docker ps
+docker stop monguito
+docker rm monguito
+
+ahora creamos un nuevo contenedor asignandole la red
+
+docker create -p27017:27017 --name monguito --network mired -e MONGO_INITDB_ROOT_USERNAME=nico -e MONGO_INITDB_ROOT_PASSWORD=password mongo 
+
+//comando nuevo --network mired
+
+docker ps -a
+
+ahora creamos otro contenedor junto con la imagen de la aplicacion que habiamos creado
+
+docker create -p3000:3000 --name chanchito --network mired miapp:1
+
+docker ps -a //los 2 contenedores , app y mongo
+
+docker start monguito
+docker start chanchito
+
+//si todo sale bien deberia funcionar en el navegador web
+localhost:3000
+localhost:3000/crear
+localhost:3000
+
+ahora revisaremos los logs para ver si la aplicacion esta corriendo desde
+docker
+
+docker logs chanchito
+
+fin de la seccion
+
+docker compose
+
+en retrospectiva los pasos que hemos realizado para crear y conectar contenedores
+
+docker containtes:
+descargar imagen
+crear una red
+crear contenedor
+	asignar puertos
+	nombres
+	variables de entorno
+	especificar la red
+	indicar la imagen:etiqueta
+
+esto por cada contenedor
+
+afortunadamante existe una herramienta que automatiza esto
+
+conociendo Docker Compose
+
+creamo nuevo archivo en la ruta del proyecto docker
+
+docker-compose.yml
+
+adentro redactamos un texto con los parametros para realizar las configuraciones
+
+version: "3.9"
+services:
+	chanchito:
+		build: .
+		ports:
+			-"3000:3000"  //anfitrion:contenedor
+			//de necesitar otro puerto poner aca
+		links:
+			-monguito
+	monguito:
+		image: mongo
+		ports:
+			-"27017:27017"
+		environment:
+			MONGO_INITDB_ROOT_USERNAME=nico
+			MONGO_INITDB_ROOT_PASSWORD=password
+
+guardamos
+//en el archivo original el tab posee solo dos espacios simples, ojo con eso
+
+vamos a la ruta del proyecto con la linea de comandos
+docker compose up
+
+probamos la aplicacion
+
+localhost:3000
+localhost:3000/crear
+localhost:3000
+
+detenemos docker con ctrl + c
+
+revisamos las imagenes
+docker images //aparece una nueva imagen llamada docker_chanchito
+docker ps-a
+aparecen 2 contenedores nuevos
+
+si volvemos a utilizar el comando docker compose up, se utilizaran los mismo contenedores ya creados
+si quisieramos eliminar los conenedores e imagenes de forma rapida, existe el comando docker compose down
+
+docker compose down
+
+aparece que una red se borró, esta se creo al crear los contenedores con docker compose up
+
+
+volumenes:
+
+al borrar los contenedores, los datos se eliminan automaticamente
+para esto esta la herramienta volume, que permite montar o compartir archivos entre anfitrion y contenedor
+
+parte del sistema de archivos del contenedor, es posible montarla en el anfitrion , por lo tanto no serán eliminadas
+al eliminar el contenedor, esto sirve con bases de datos y desarrollo
+
+para lo cual existen 3 tipos
+
+anonimo: indicas la ruta (no se pueden referenciar desde otro contenedor)
+anfitrion: eliges la carpeta anfitriona para montarla
+nombrado: indicas una ruta con un nombre que se puede referenciar desde otros contenedores
+
+vamos al archivo docker-compose.yml para agregar nuevas configuraciones
+
+al final del archivo
+
+volumes:
+	mongo-data:
+
+
+en la imagen mongo, a la altura de enviroment
+
+volumes:
+	- mongo-data:/data/db  //solo se puede agregar lo agregado en volumes
+      	# mysql -> /var/lib/mysql
+      	# postgres -> /var/lib/postgresql/data
+
+guardar , docker compose up
+
+localhost:3000
+localhost:3000/crear
+localhost:3000
+
+//al revisar se mantiene el dato de chanchito, y persiste luego de subir y bajar los contenedores
+
+agilizando el desarrollo utilizando un nuevo ambiente de desarrollo:
+
+
+configurando multiples ambientes
+
+nuevo archivo: dockerfile.dev
+
+copiamos y pegamos lo de dockerfile
+
+al trabajar con una aplicacion con node, esta requiere un paso extra para considerar los cambios
+
+agregamos un nuevo comando de run
+
+RUN npm i -g nodemon
+WORKDIR /home/app
+CMD["nodemon","index.js"]
+
+eliminamos la linea COPY
+
+guardamos 
+
+creamos un nuevo archivo
+
+docker-compose-dev.yml
+
+copiamos el archivo docker compose
+
+build:
+	context: .
+	dockerfile: Dockerfile.dev
+links:
+volumes: .:/home/app
+
+guardar
+
+ir a la terminal
+
+
+docker compose -f docker-compose-dev.yml up//indicar un archivo docker compose customizado
+
+
+en el ambiente de desarrollo se ha activado el hot reload
+
+
+fin de docker
+
+
+
+
+
+
